@@ -12,3 +12,4 @@ C:\Users\Owner\Documents\CS Code\403\Lox_Interpreter\obj\Debug\net8.0\refint\Lox
 C:\Users\Owner\Documents\CS Code\403\Lox_Interpreter\obj\Debug\net8.0\Lox_Interpreter.pdb
 C:\Users\Owner\Documents\CS Code\403\Lox_Interpreter\obj\Debug\net8.0\Lox_Interpreter.genruntimeconfig.cache
 C:\Users\Owner\Documents\CS Code\403\Lox_Interpreter\obj\Debug\net8.0\ref\Lox_Interpreter.dll
+C:\Users\Owner\Documents\CS Code\403\Lox_Interpreter\obj\Debug\net8.0\Lox_Interpreter.sourcelink.json

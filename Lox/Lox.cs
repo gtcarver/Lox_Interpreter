@@ -77,16 +77,16 @@ class Lox
     static void Run(string source)
     {
         var scanner = new Scanner(source);
-        // get lost of tokens using ScanTokens from Scanner.cs
+        // get list of tokens using ScanTokens from Scanner.cs
         var tokens = scanner.ScanTokens();
 
-        // For now, just print the tokens.
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.Parse();
 
-        
-        foreach (var token in tokens)
-        {
-            Console.WriteLine(token);
-        }
+        // Stop if there was a syntax error.
+        if (hadError) return;
+
+        Console.WriteLine(new AstPrinter().Print(expression));
     }
 
     // function to call when an error is generated
@@ -100,5 +100,18 @@ class Lox
     {
         Console.Error.WriteLine($"[line {line}] Error{where}: {message}");
         hadError = true;
+    }
+
+    // Error thrown by parser
+    public static void Error(Token token, string message)
+    {
+        if (token.Type == TokenType.EOF)
+        {
+            Report(token.Line, " at end", message);
+        }
+        else
+        {
+            Report(token.Line, " at '" + token.Lexeme + "'", message);
+        }
     }
 }
