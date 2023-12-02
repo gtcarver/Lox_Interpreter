@@ -8,7 +8,9 @@ using System.Collections.Generic;
 
 class Lox
 {
+    private static Interpreter interpreter = new Interpreter();
     private static bool hadError = false;
+    static bool hadRuntimeError = false;
 
     static void Main(string[] args)
     {
@@ -43,6 +45,7 @@ class Lox
             Run(Encoding.Default.GetString(bytes)); // run everything that's read in
             // Indicate an error in the exit code.
             if (hadError) Environment.Exit(65);
+            if (hadRuntimeError) Environment.Exit(70);
         }
         catch (IOException ex)
         {
@@ -81,12 +84,13 @@ class Lox
         var tokens = scanner.ScanTokens();
 
         Parser parser = new Parser(tokens);
-        Expr expression = parser.Parse();
+        List<Stmt> statements = parser.Parse();
 
         // Stop if there was a syntax error.
         if (hadError) return;
 
-        Console.WriteLine(new AstPrinter().Print(expression));
+        interpreter.Interpret(statements);
+        //Console.WriteLine(new AstPrinter().Print(expression));
     }
 
     // function to call when an error is generated
@@ -113,5 +117,11 @@ class Lox
         {
             Report(token.Line, " at '" + token.Lexeme + "'", message);
         }
+    }
+
+    public static void RuntimeError(RuntimeError error)
+    {
+        Console.Error.WriteLine(error.Message + $"\n[line {error.Token.Line}]");
+        hadRuntimeError = true;
     }
 }

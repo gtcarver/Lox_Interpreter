@@ -14,6 +14,23 @@ class AstPrinter : Expr.IVisitor<string>
     {
         return Parenthesize(expr.operatorToken.Lexeme, expr.left, expr.right);
     }
+    // get rid of
+    public string VisitVariableExpr(Expr.Variable var)
+    {
+        return "";
+    }
+    // get rid of
+    public string VisitAssignExpr(Expr.Assign var)
+    {
+        return "";
+    }
+
+    // get rid of
+    public string VisitLogicalExpr(Expr.Logical var)
+    {
+        return "";
+    }
+
 
     public string VisitGroupingExpr(Expr.Grouping expr)
     {

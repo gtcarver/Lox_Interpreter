@@ -17,15 +17,29 @@ class GenerateAst
 
         string outputDir = args[0];
 
-        List<string> types = new List<string>
+        List<string> exprTypes = new List<string>
         {
+            "Assign   : Token name, Expr value",
             "Binary   : Expr left, Token operatorToken, Expr right",
             "Grouping : Expr expression",
             "Literal  : object value",
-            "Unary    : Token operatorToken, Expr right"
+            "Logical  : Expr left, Token operatorToken, Expr right",
+            "Unary    : Token operatorToken, Expr right",
+            "Variable : Token name"
         };
 
-        DefineAst(outputDir, "Expr", types);
+        List<string> stmtTypes = new List<string>
+        {
+            "Block      : List<Stmt> statements",
+            "Expression : Expr expression",
+            "If         : Expr condition, Stmt thenBranch," + " Stmt elseBranch",
+            "Print      : Expr expression",
+            "Var        : Token name, Expr initializer",
+            "While      : Expr condition, Stmt body"
+        };
+
+        DefineAst(outputDir, "Expr", exprTypes);
+        DefineAst(outputDir, "Stmt", stmtTypes);
     }
 
     static void DefineAst(string outputDir, string baseName, List<string> types)
