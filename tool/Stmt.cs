@@ -9,9 +9,12 @@ abstract class Stmt
     public interface IVisitor<R>
     {
         R VisitBlockStmt(Block stmt);
+        R VisitClassStmt(Class stmt);
         R VisitExpressionStmt(Expression stmt);
+        R VisitFunctionStmt(Function stmt);
         R VisitIfStmt(If stmt);
         R VisitPrintStmt(Print stmt);
+        R VisitReturnStmt(Return stmt);
         R VisitVarStmt(Var stmt);
         R VisitWhileStmt(While stmt);
     }
@@ -31,6 +34,25 @@ abstract class Stmt
         public readonly List<Stmt> statements;
     }
 
+    public class Class : Stmt
+    {
+        public Class(Token name, Expr.Variable superclass, List<Stmt.Function> methods)
+        {
+            this.name = name;
+            this.superclass = superclass;
+            this.methods = methods;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitClassStmt(this);
+        }
+
+        public readonly Token name;
+        public readonly Expr.Variable superclass;
+        public readonly List<Stmt.Function> methods;
+    }
+
     public class Expression : Stmt
     {
         public Expression(Expr expression)
@@ -44,6 +66,25 @@ abstract class Stmt
         }
 
         public readonly Expr expression;
+    }
+
+    public class Function : Stmt
+    {
+        public Function(Token name, List<Token> funParams, List<Stmt> body)
+        {
+            this.name = name;
+            this.funParams = funParams;
+            this.body = body;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitFunctionStmt(this);
+        }
+
+        public readonly Token name;
+        public readonly List<Token> funParams;
+        public readonly List<Stmt> body;
     }
 
     public class If : Stmt
@@ -78,6 +119,23 @@ abstract class Stmt
         }
 
         public readonly Expr expression;
+    }
+
+    public class Return : Stmt
+    {
+        public Return(Token keyword, Expr value)
+        {
+            this.keyword = keyword;
+            this.value = value;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitReturnStmt(this);
+        }
+
+        public readonly Token keyword;
+        public readonly Expr value;
     }
 
     public class Var : Stmt

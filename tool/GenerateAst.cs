@@ -21,9 +21,14 @@ class GenerateAst
         {
             "Assign   : Token name, Expr value",
             "Binary   : Expr left, Token operatorToken, Expr right",
+            "Call     : Expr callee, Token paren, List<Expr> arguments",
+            "Get      : Expr exprObject, Token name",
             "Grouping : Expr expression",
             "Literal  : object value",
             "Logical  : Expr left, Token operatorToken, Expr right",
+            "Set      : Expr exprObject, Token name, Expr value",
+            "Super    : Token keyword, Token method",
+            "This     : Token keyword",
             "Unary    : Token operatorToken, Expr right",
             "Variable : Token name"
         };
@@ -31,9 +36,12 @@ class GenerateAst
         List<string> stmtTypes = new List<string>
         {
             "Block      : List<Stmt> statements",
+             "Class      : Token name, Expr.Variable superclass," + " List<Stmt.Function> methods",
             "Expression : Expr expression",
+            "Function   : Token name, List<Token> funParams," + " List<Stmt> body",
             "If         : Expr condition, Stmt thenBranch," + " Stmt elseBranch",
             "Print      : Expr expression",
+            "Return     : Token keyword, Expr value",
             "Var        : Token name, Expr initializer",
             "While      : Expr condition, Stmt body"
         };

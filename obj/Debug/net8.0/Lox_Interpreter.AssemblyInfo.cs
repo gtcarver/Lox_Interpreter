@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Lox_Interpreter")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b8e584bb61ef87bfdad69d1d66e9723e29776f9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5d4809ba33dbb5de861fda9c55e291ffc54fe2a9")]
 [assembly: System.Reflection.AssemblyProductAttribute("Lox_Interpreter")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Lox_Interpreter")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

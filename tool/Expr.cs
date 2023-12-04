@@ -10,9 +10,14 @@ abstract class Expr
     {
         R VisitAssignExpr(Assign expr);
         R VisitBinaryExpr(Binary expr);
+        R VisitCallExpr(Call expr);
+        R VisitGetExpr(Get expr);
         R VisitGroupingExpr(Grouping expr);
         R VisitLiteralExpr(Literal expr);
         R VisitLogicalExpr(Logical expr);
+        R VisitSetExpr(Set expr);
+        R VisitSuperExpr(Super expr);
+        R VisitThisExpr(This expr);
         R VisitUnaryExpr(Unary expr);
         R VisitVariableExpr(Variable expr);
     }
@@ -51,6 +56,42 @@ abstract class Expr
         public readonly Expr left;
         public readonly Token operatorToken;
         public readonly Expr right;
+    }
+
+    public class Call : Expr
+    {
+        public Call(Expr callee, Token paren, List<Expr> arguments)
+        {
+            this.callee = callee;
+            this.paren = paren;
+            this.arguments = arguments;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitCallExpr(this);
+        }
+
+        public readonly Expr callee;
+        public readonly Token paren;
+        public readonly List<Expr> arguments;
+    }
+
+    public class Get : Expr
+    {
+        public Get(Expr exprObject, Token name)
+        {
+            this.exprObject = exprObject;
+            this.name = name;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitGetExpr(this);
+        }
+
+        public readonly Expr exprObject;
+        public readonly Token name;
     }
 
     public class Grouping : Expr
@@ -100,6 +141,57 @@ abstract class Expr
         public readonly Expr left;
         public readonly Token operatorToken;
         public readonly Expr right;
+    }
+
+    public class Set : Expr
+    {
+        public Set(Expr exprObject, Token name, Expr value)
+        {
+            this.exprObject = exprObject;
+            this.name = name;
+            this.value = value;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitSetExpr(this);
+        }
+
+        public readonly Expr exprObject;
+        public readonly Token name;
+        public readonly Expr value;
+    }
+
+    public class Super : Expr
+    {
+        public Super(Token keyword, Token method)
+        {
+            this.keyword = keyword;
+            this.method = method;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitSuperExpr(this);
+        }
+
+        public readonly Token keyword;
+        public readonly Token method;
+    }
+
+    public class This : Expr
+    {
+        public This(Token keyword)
+        {
+            this.keyword = keyword;
+        }
+
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+          return visitor.VisitThisExpr(this);
+        }
+
+        public readonly Token keyword;
     }
 
     public class Unary : Expr

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 
 class Parser
@@ -18,30 +19,34 @@ class Parser
     }
 
     /*
-        This is the grammar we're working with (as of ch. 9):
 
         program        → declaration* EOF ;
-        declaration    → varDecl | statement ;
+        declaration    → classDecl | funDecl | varDecl | statement ;
+        classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
+        funDecl        → "fun" function ;
         varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-        statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+        statement      → exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block ;
         exprStmt       → expression ";" ;
+        function       → IDENTIFIER "(" parameters? ")" block ;
         forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
         ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
         printStmt      → "print" expression ";" ;
+        returnStmt     → "return" expression? ";" ;
         whileStmt      → "while" "(" expression ")" statement ;
         block          → "{" declaration* "}" ;
         expression     → assignment ;
-        assignment     → IDENTIFIER "=" assignment | logic_or ;
+        assignment     → ( call "." )? IDENTIFIER "=" assignment | logic_or ;
         logic_or       → logic_and ( "or" logic_and )* ;
         logic_and      → equality ( "and" equality )* ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term           → factor ( ( "-" | "+" ) factor )* ;
         factor         → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary | primary ;
-        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+        unary          → ( "!" | "-" ) unary | call ;
+        call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
+        arguments      → expression ( "," expression )* ;
+        primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | "super" "." IDENTIFIER ;
     
-        Will be expanded later.
     */
 
     // declaration production rule
@@ -49,6 +54,8 @@ class Parser
     {
         try
         {
+            if (Match(TokenType.CLASS)) return ClassDeclaration();
+            if (Match(TokenType.FUN)) return Function("function");
             if (Match(TokenType.VAR)) return VarDeclaration();
 
             return Statement();
@@ -58,6 +65,31 @@ class Parser
             Synchronize();
             return null;
         }
+    }
+
+    // class declaration production rule
+    private Stmt ClassDeclaration() 
+    {
+        Token name = Consume(TokenType.IDENTIFIER, "Expect class name.");
+
+        Expr.Variable superclass = null;
+        if (Match(TokenType.LESS)) 
+        {
+            Consume(TokenType.IDENTIFIER, "Expect superclass name.");
+            superclass = new Expr.Variable(Previous());
+        }
+
+        Consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
+
+        List<Stmt.Function> methods = new List<Stmt.Function>();
+        while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd()) 
+        {
+            methods.Add(Function("method"));
+        }
+
+        Consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, superclass, methods);
     }
 
     // variable declaration production rule
@@ -81,6 +113,7 @@ class Parser
         if (Match(TokenType.FOR)) return ForStatement();
         if (Match(TokenType.IF)) return IfStatement();
         if (Match(TokenType.PRINT)) return PrintStatement();
+        if (Match(TokenType.RETURN)) return ReturnStatement();
         if (Match(TokenType.WHILE)) return WhileStatement();
         if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(Block());
 
@@ -178,12 +211,43 @@ class Parser
         return new Stmt.Expression(expr);
     }
 
+    // function production rule
+    private Stmt.Function Function(string kind) 
+    {
+        Token name = Consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        List<Token> parameters = [];
+        if (!Check(TokenType.RIGHT_PAREN)) 
+        {
+            do 
+            {
+                if (parameters.Count >= 255) Error(Peek(), "Can't have more than 255 parameters.");
+                parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+            } while (Match(TokenType.COMMA));
+        }
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+        Consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = Block();
+        return new Stmt.Function(name, parameters, body);
+    }
+
     // print statement production rule
     private Stmt PrintStatement()
     {
         Expr value = Expression();
         Consume(TokenType.SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
+    }
+
+    private Stmt ReturnStatement() 
+    {
+        Token keyword = Previous();
+        Expr value = null;
+        if (!Check(TokenType.SEMICOLON)) value = Expression();
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
     // while statement production rule
@@ -230,6 +294,11 @@ class Parser
             {
                 Token name = variable.name;
                 return new Expr.Assign(name, value);
+            }
+            else if (expr is Expr.Get) 
+            {
+                Expr.Get get = (Expr.Get)expr;
+                return new Expr.Set(get.exprObject, get.name, value);
             }
 
             Error(equals, "Invalid assignment target.");
@@ -338,7 +407,47 @@ class Parser
             return new Expr.Unary(op, right);
         }
 
-        return Primary();
+        return Call();
+    }
+
+    // call production rule
+    private Expr Call() 
+    {
+        Expr expr = Primary();
+
+        while (true) 
+        { 
+            if (Match(TokenType.LEFT_PAREN)) expr = FinishCall(expr);
+            else if (Match(TokenType.DOT)) 
+            {
+                Token name = Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
+            }
+            else break;
+        }
+
+        return expr;
+    }
+
+    // helper function for parsing arguments list from Call()
+    private Expr FinishCall(Expr callee) 
+    {
+        List<Expr> arguments = new List<Expr>();
+        if (!Check(TokenType.RIGHT_PAREN)) 
+        {
+            do 
+            {
+                if (arguments.Count >= 255) 
+                {
+                    Error(Peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.Add(Expression());
+            } while (Match(TokenType.COMMA));
+        }
+
+        Token paren = Consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+
+        return new Expr.Call(callee, paren, arguments);
     }
 
     // primary production rule
@@ -352,6 +461,16 @@ class Parser
         {
             return new Expr.Literal(Previous().Literal);
         }
+
+        if (Match(TokenType.SUPER)) 
+        {
+            Token keyword = Previous();
+            Consume(TokenType.DOT, "Expect '.' after 'super'.");
+            Token method = Consume(TokenType.IDENTIFIER, "Expect superclass method name.");
+            return new Expr.Super(keyword, method);
+        }
+
+        if (Match(TokenType.THIS)) return new Expr.This(Previous());
 
         if (Match(TokenType.IDENTIFIER))
         {

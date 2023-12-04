@@ -89,8 +89,13 @@ class Lox
         // Stop if there was a syntax error.
         if (hadError) return;
 
+        Resolver resolver = new Resolver(interpreter);
+        resolver.Resolve(statements);
+
+        // Stop if there was a resolution error.
+        if (hadError) return;
+        
         interpreter.Interpret(statements);
-        //Console.WriteLine(new AstPrinter().Print(expression));
     }
 
     // function to call when an error is generated
